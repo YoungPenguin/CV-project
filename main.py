@@ -1,20 +1,28 @@
 ### CV project 
+
+#%% imports
+
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+import preprocessing as pre
+
+#%% pre
 
 ## Image preprocessing 
 # choose 1 image: NORMAL2-IM-0329-0001.jpeg
 # divide image into two parts with 30% overlap, use open cv
+
 filename = 'NORMAL2-IM-0329-0001.jpeg'
 im = cv2.imread('images/x-ray/'+filename)
-im = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY).astype(np.float)/255.0
-plt.imshow(im,cmap='gray')
-plt.show()
 
-r, c = im.shape
-print(r," c:",c) # r: 1953  c: 2216
+full,top,bottom = pre.splitY(0.3,im)
+
+fig, ax = plt.subplots(1,3)
+ax[0].imshow(top)
+ax[1].imshow(full)
+ax[2].imshow(bottom)
 
 ## Feature extraction and description
 # ORB
