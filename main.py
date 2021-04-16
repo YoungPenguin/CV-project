@@ -19,6 +19,7 @@ filename = 'NORMAL2-IM-0329-0001.jpeg'
 im = cv2.imread('images/x-ray/'+filename)
 
 full,top,bottom = pre.splitY(0.3,im)
+
 # convert to gray scale
 topGray = cv2.cvtColor(top, cv2.COLOR_RGB2GRAY).astype(np.float)/255.0
 bottomGray = cv2.cvtColor(bottom, cv2.COLOR_RGB2GRAY).astype(np.float)/255.0
@@ -48,6 +49,25 @@ ax[0].scatter(blobsTop[0,:], blobsTop[1,:],s=25,c='r',marker='.')
 ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(blobsBot[0,:], blobsBot[1,:],s=25,c='r',marker='.')
 plt.show()
+
+# Initiate SIFT detector
+sift = cv2.SIFT_create()
+# find the keypoints and descriptors with SIFT
+kp1, des1 = sift.detectAndCompute(topGray,None)
+kp2, des2 = sift.detectAndCompute(bottomGray,None)
+
+# BFMatcher with default params
+bf = cv2.BFMatcher()
+matches = bf.knnMatch(des1,des2,k=2)
+# Apply ratio test
+good = []
+for m,n in matches:
+    if m.distance < 0.75*n.distance:
+        good.append([m])
+# cv.drawMatchesKnn expects list of lists as matches.
+plt.figure(figsize=(30,20))
+img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+plt.imshow(img3),plt.show()
 
 #%% Harris corners (week 6)
 # convert to gray-scale
