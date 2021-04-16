@@ -151,8 +151,8 @@ eps = 1.0 # eps > 0.5
 k = 0.1 # k < 0.2
 tau = 0 # tau ~ 0 ([-0.5;0.5])
 
-ctop = cvfunctions.cornerDetector(topGray, s, eps, k, tau)
-cbot = cvfunctions.cornerDetector(bottomGray, s, eps, k, tau)
+ctop = cvfunctions.cornerDetector(topGray/255.0, s, eps, k, tau)
+cbot = cvfunctions.cornerDetector(bottomGray/255.0, s, eps, k, tau)
 
 # plot image and corners
 fig, ax = plt.subplots(figsize = (20,10), nrows = 1, ncols = 2)
@@ -162,6 +162,25 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
+#%% Harris corners (brief descriptors)
+
+def brief_descriptor(im1, im2, cim1, cim2):
+
+    extractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+    kpts1_prep = list(zip(np.array(cim1[0]).astype(float), np.array(cim1[1]).astype(float)))
+    keypoints_im1 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts1_prep]
+
+    kpts2_prep = list(zip(np.array(cim2[0]).astype(float), np.array(cim2[1]).astype(float)))
+    keypoints_im2 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts2_prep]
+
+    (kps1, features1) = extractor.compute(im1, keypoints_im1)
+    (kps2, features2) = extractor.compute(im2, keypoints_im2)
+    return (features1, features2)
+
+(f1, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+
+matcher = cv2.BFMatcher(cv2.NORM_L1)
 
 #%%
 
