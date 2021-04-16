@@ -159,14 +159,26 @@ def brief_descriptor(im1, im2, cim1, cim2):
 
     (kps1, features1) = extractor.compute(im1, keypoints_im1)
     (kps2, features2) = extractor.compute(im2, keypoints_im2)
-    return (features1, features2)
+    return ((kps1, features1), (kps2, features2))
 
-(f1, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+((kps1, features1), (kps2, features2)) = brief_descriptor(topGray, bottomGray, ctop, cbot)
 
-matcher = cv2.BFMatcher(cv2.NORM_L1)
+matcher = cv2.BFMatcher(cv2.NORM_L2)
 
 descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
 descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
+
+matches = matcher.knnMatch(features1,features2,k=2)
+# Apply ratio test
+good = []
+for m,n in matches:
+    if m.distance < 0.75*n.distance:
+        good.append([m])
+print(len(good))
+
+plt.figure(figsize=(30,20))
+img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+plt.imshow(img3),plt.show()
 
 #%%
 
