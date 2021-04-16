@@ -98,7 +98,7 @@ plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
 
-#%% Find homography
+# Find homography
 
 flattened = [val for sublist in good for val in sublist]
 
@@ -120,7 +120,9 @@ draw_params = dict(matchColor = (0,255,0), # draw matches in green color
 img3 = cv2.drawMatches(topGray,kp1,bottomGrayLine,kp2,flattened,None,**draw_params)
 plt.imshow(img3, 'gray'),plt.show()
 
-#%% Stitching
+#H = cvfunctions.findHomography(src_pts, dst_pts)
+
+# Stitching
 output = cvfunctions.warpImages(bottomGray, topGray, H)
 plt.imshow(output)
 plt.show()
@@ -143,8 +145,28 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
-#%% Brief descriptor
-brief = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+#%% Harris corners (brief descriptors)
+
+def brief_descriptor(im1, im2, cim1, cim2):
+
+    extractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+    kpts1_prep = list(zip(np.array(cim1[0]).astype(float), np.array(cim1[1]).astype(float)))
+    keypoints_im1 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts1_prep]
+
+    kpts2_prep = list(zip(np.array(cim2[0]).astype(float), np.array(cim2[1]).astype(float)))
+    keypoints_im2 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts2_prep]
+
+    (kps1, features1) = extractor.compute(im1, keypoints_im1)
+    (kps2, features2) = extractor.compute(im2, keypoints_im2)
+    return (features1, features2)
+
+(f1, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+
+matcher = cv2.BFMatcher(cv2.NORM_L1)
+
+descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
+descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
 
 #%%
 ## Detect, descript, match, stitch using Homography matrix
