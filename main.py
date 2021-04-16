@@ -118,7 +118,7 @@ plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
 
-#%% Find homography
+# Find homography
 
 flattened = [val for sublist in good for val in sublist]
 
@@ -130,16 +130,19 @@ matchesMask = mask.ravel().tolist()
 h,w = topGray.shape
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 dst = cv2.perspectiveTransform(pts,H)
-bottomGray = cv2.polylines(bottomGray,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+bottomGrayLine = bottomGray.copy()
+bottomGrayLine = cv2.polylines(bottomGrayLine ,[np.int32(dst)],True,255,3, cv2.LINE_AA)
 
 draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                    singlePointColor = None,
                    matchesMask = matchesMask, # draw only inliers
                    flags = 2)
-img3 = cv2.drawMatches(topGray,kp1,bottomGray,kp2,flattened,None,**draw_params)
+img3 = cv2.drawMatches(topGray,kp1,bottomGrayLine,kp2,flattened,None,**draw_params)
 plt.imshow(img3, 'gray'),plt.show()
 
-#%% Stitching
+#H = cvfunctions.findHomography(src_pts, dst_pts)
+
+# Stitching
 output = cvfunctions.warpImages(bottomGray, topGray, H)
 plt.imshow(output)
 plt.show()
@@ -151,8 +154,8 @@ eps = 1.0 # eps > 0.5
 k = 0.1 # k < 0.2
 tau = 0 # tau ~ 0 ([-0.5;0.5])
 
-ctop = cvfunctions.cornerDetector(topGray, s, eps, k, tau)
-cbot = cvfunctions.cornerDetector(bottomGray, s, eps, k, tau)
+ctop = cvfunctions.cornerDetector(topGray/255.0, s, eps, k, tau)
+cbot = cvfunctions.cornerDetector(bottomGray/255.0, s, eps, k, tau)
 
 # plot image and corners
 fig, ax = plt.subplots(figsize = (20,10), nrows = 1, ncols = 2)
@@ -162,6 +165,8 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
+descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
+descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
 
 #%%
 
