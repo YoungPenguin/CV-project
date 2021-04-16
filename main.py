@@ -143,7 +143,12 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
+#%% Brief descriptor
+brief = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
 #%%
+## Detect, descript, match, stitch using Homography matrix
+
 
 ## Feature matching
 # Use Hamming distance for ORB
