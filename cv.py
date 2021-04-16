@@ -6,6 +6,9 @@ Created on Thu Mar 11 17:37:43 2021
 @author: s174162
 """
 import numpy as np
+import cv2
+from scipy.ndimage import maximum_filter
+import random
 
 def box3d(n):
    N = 15*n;
@@ -152,3 +155,182 @@ def estimateHomography(q1,q2):
     
     H = np.linalg.inv(T2)@Hnorm@T1 
     return H
+
+def gaussian1DKernel(s):
+    # g = 1D gaussian kernel
+    # gx = derivative of g
+    # s = gaussian width (sigma)
+    kSize = 4; # kernelsize
+    t = s**2
+    v = kSize*s;
+    x = np.arange(-np.ceil(v+1),np.ceil(v+1));
+    g = np.exp(-x**2/(2*t));
+    gx = -x/(t)*g;
+    g = g.reshape((-1,1))
+    gx = gx.reshape((-1,1))
+    
+    return g, gx
+
+def gaussianSmoothing(im, s):
+    # I = gaussian smoothed image of im
+    # Ix and Iy = smoothed derivatives of the image im
+    # im = original image 
+    # sigma = gaussian width
+
+    g, gx = gaussian1DKernel(s)
+    I = cv2.filter2D(cv2.filter2D(im,-1,g),-1,g.T);
+    Ix = cv2.filter2D(cv2.filter2D(im,-1,gx),-1,g.T);
+    Iy = cv2.filter2D(cv2.filter2D(im,-1,g),-1,gx.T);
+    
+    return I, Ix, Iy
+
+def smoothedHessian(im, s, eps):  
+    g, gx = gaussian1DKernel(s)
+    g_eps, gx_eps = gaussian1DKernel(eps)
+    I, Ix, Iy = gaussianSmoothing(im, s)
+    
+    # elements in C matrix
+    a = cv2.filter2D(Ix**2,-1,g_eps) # upper left corner
+    b = cv2.filter2D(Iy**2,-1,g_eps) # lower right corner
+    c = cv2.filter2D(Ix*Iy,-1,g_eps) # upper right corner = lower left corner
+    
+    return a, b, c
+
+def harrisMeasure(im, s, eps, k):
+    a, b, c = smoothedHessian(im, s, eps)
+    r = a*b-c**2-k*(a+b)**2
+    
+    return r
+
+def cornerDetector(im, s, eps, k, tau):
+    # c = list of points where r is the local maximum and larger than some relative threshold i.e. r(x,y) > tau  
+    r = harrisMeasure(im, s, eps, k)
+    footprint = np.array([[0, 1, 0],
+                          [1, 0, 1],
+                          [0, 1, 0]])
+    maxs = maximum_filter(r, footprint=footprint)
+    col,row = np.where(maxs!=0) # get indices of local maxima
+    vals = r[col,row]
+
+    row = row[vals > tau]
+    col = col[vals > tau]
+    
+    c = np.array([row,col])
+    
+    return c
+
+def getGaussDerivative(t):
+    '''
+    Computes kernels of Gaussian and its derivatives.
+    Parameters
+    ----------
+    t : float
+        Vairance - t.
+
+    Returns
+    -------
+    g : numpy array
+        Gaussian.
+    dg : numpy array
+        First order derivative of Gaussian.
+    ddg : numpy array
+        Second order derivative of Gaussian
+    dddg : numpy array
+        Third order derivative of Gaussian.
+
+    '''
+
+    kSize = 5
+    sigma = np.sqrt(t)
+    x = np.arange(int(-np.ceil(sigma*kSize)), int(np.ceil(sigma*kSize))+1)
+    x = np.reshape(x,(-1,1))
+    g = np.exp(-x**2/(2*t))
+    g = g/np.sum(g)
+    dg = -x/t*g
+    ddg = -g/t - x/t*dg
+    dddg = -2*dg/t - x/t*ddg
+    return g, dg, ddg, dddg
+
+def scaleSpaced(im, sigma, n):
+    # Im_scales = a scale space of the original image Im.
+    m = 3+n
+    k = 2**(1/n) # scale factor
+    r,c = im.shape
+    im_scales = np.zeros((r,c,m))
+    tStep = np.zeros(m)
+
+    Lg = im
+    for i in range(m):
+        sigma_new = sigma*k**i
+        t = sigma_new**2;
+        g, dg, ddg, dddg = getGaussDerivative(t)
+        im_scales[:,:,i] = cv2.filter2D(cv2.filter2D(im, -1, g), -1, g.T)
+    
+    return im_scales
+
+def differenceOfGaussian(im, sigma, n):
+    # DoG = scale space difference of Gaussians of the original image im
+    m = 3+n
+    r,c = im.shape
+    DoG = np.zeros((r,c,m-1))
+    
+    im_scales = scaleSpaced(im, sigma, n)
+    for i in range(m-1):
+        DoG[:,:,i] = im_scales[:,:,i+1]-im_scales[:,:,i]
+    
+    return DoG
+
+def detectBlobs(im, sigma, n, thres):
+    # blobs = the blobs (pixels) of the original image Im with a DoG larger than a threshold.
+    DoG = differenceOfGaussian(im, sigma, n)
+    
+    footprint = np.ones((3,3,3))
+    footprint[1,1,1]=0;
+    maxs = maximum_filter(np.abs(DoG), footprint=footprint)
+    maxs = maxs[:,:,1:DoG.shape[-1]-1] # don't need the first and last
+    
+    col, row, layer = np.where(maxs > 0) # find local maximas
+    vals = np.abs(DoG[col,row,layer])
+
+    row = row[vals >= thres]
+    col = col[vals >= thres]
+    layer = layer[vals >= thres] # scale layer
+    
+    blobs = np.array([row,col,layer])
+    
+    return blobs
+
+def localiseKeypoints(DoG, blobs, n):
+    # n is number of keypoints we want to localise
+    # create a ist of random number (index for keypoints)
+    idxrand = random.sample(range(1, blobs.shape[-1]), n)
+    keypoints = []
+    Js = []
+    offsets = []
+    Hs = []
+    
+    for idx in idxrand:
+        x = blobs[0,idx]
+        y = blobs[1,idx]
+        s = blobs[2,idx]
+        dx = (DoG[y,x+1,s]-DoG[y,x-1,s])/2
+        dy = (DoG[y+1,x,s]-DoG[y-1,x,s])/2 
+        ds = (DoG[y,x,s+1]-DoG[y,x,s-1])/2 
+        dxx = DoG[y,x+1,s]-2*DoG[y,x,s]+DoG[y,x-1,s]
+        dxy = ((DoG[y+1,x+1,s]-DoG[y+1,x-1,s])-(DoG[y-1,x+1,s]-DoG[y-1,x-1,s]))
+        dxs = ((DoG[y,x+1,s+1]-DoG[y,x-1,s+1])-(DoG[y,x+1,s-1]-DoG[y,x-1,s-1]))/4
+        dyy = DoG[y+1,x,s]-2*DoG[y,x,s]+DoG[y-1,x,s] 
+        dys = ((DoG[y+1,x,s+1]-DoG[y-1,x,s+1])-(DoG[y+1,x,s-1]-DoG[y-1,x,s-1]))/4 
+        dss = DoG[y,x,s+1]-2*DoG[y,x,s]+DoG[y,x,s-1] 
+        J = np.array([dx, dy, ds]) 
+        HD = np.array([[dxx, dxy, dxs], [dxy, dyy, dys], [dxs, dys, dss]]) 
+        offset = -np.linalg.inv(HD)*(J)
+        
+        # append
+        point = np.array([x,y,s])
+        keypoints.append(point)
+        offsets.append(offset)
+        Hs.append(HD[:2,:2])
+        Js.append(J)
+        
+    return offsets, np.array(Js).T, Hs, np.array(keypoints).T
