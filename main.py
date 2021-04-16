@@ -46,39 +46,19 @@ result_im2 = cv2.drawKeypoints(bottomGray, kp2, None, flags=0)
 #cv2.imshow("Bottom image",result_im2)
 #cv2.waitKey(0)
 
-# FLANN parameters
-flann_index_lsh = 6
-index_params = dict(algorithm=flann_index_lsh,
-                    table_number=12,
-                    key_size=20,
-                    multi_probe_level=2)
-search_params = dict(checks=100)  # or pass empty dictionary
+# Uing Brute Force matcher with Hamming distance
+# create BFMatcher object
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-# create FLANN
-flann = cv2.FlannBasedMatcher(index_params, search_params)
+# Match descriptors
+matches = bf.match(des1,des2)
 
-# perform matching
-flann_matches = flann.knnMatch(des1, des2, k=2)
+# Sort them in the order of their distance.
+matches = sorted(matches, key = lambda x:x.distance)
+# Draw first 10 matches.
+img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+cv2.imshow("ORB detector and descriptor, BF matcher",img3)
 
-# Need to draw only good matches, so create a mask
-matches_mask = [[0, 0] for i in range(len(flann_matches))]
-
-# ratio test as per Lowe's paper
-good = []
-for index in range(len(flann_matches)):
-    if len(flann_matches[index]) == 2:
-        m, n = flann_matches[index]
-        if m.distance < 0.8 * n.distance:  # 0.8 is threshold of ratio testing
-            matches_mask[index] = [1, 0]
-            good.append(flann_matches[index])
-
-draw_params = dict(
-    singlePointColor=(255, 0, 0),
-    matchesMask=matches_mask,
-    flags=2)
-
-img3 = cv2.drawMatchesKnn(topGray, kp1, bottomGray, kp2, flann_matches, None, **draw_params)
-cv2.imshow("Final image",img3)
 #%% SIFT - Use Difference of Gaussians (DoG) (week 7)
 # in order to use SIFT we use DoG to detect BLOBs. DetectBlobs does this.
 # set parameters
@@ -130,8 +110,13 @@ matchesMask = mask.ravel().tolist()
 h,w = topGray.shape
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 dst = cv2.perspectiveTransform(pts,H)
+<<<<<<< HEAD
 bottomGrayLine = bottomGray.copy()
 bottomGrayLine = cv2.polylines(bottomGrayLine ,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+=======
+bottomGray_copy = bottomGray.copy()
+bottomGrayLine = cv2.polylines(bottomGray_copy,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+>>>>>>> aa349126ea6a817c855d3621d43991e3616a2235
 
 draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                    singlePointColor = None,
@@ -165,9 +150,12 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
+<<<<<<< HEAD
 descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
 descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
 
+=======
+>>>>>>> aa349126ea6a817c855d3621d43991e3616a2235
 #%%
 
 ## Feature matching
