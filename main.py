@@ -31,6 +31,54 @@ ax[2].imshow(bottom)
 
 #%% Feature extraction and description
 # ORB
+# create ORB dectector
+orb = cv2.ORB_create(nfeatures=3000)  # default features is 500
+
+# find key point and descriptor
+kp1, des1 = orb.detectAndCompute(topGray, None)
+kp2, des2 = orb.detectAndCompute(bottomGray, None)
+
+# draw key point on image
+result_im1 = cv2.drawKeypoints(topGray, kp1, None, flags=0)
+result_im2 = cv2.drawKeypoints(bottomGray, kp2, None, flags=0)
+
+#cv2.imshow("Top image",result_im1)
+#cv2.imshow("Bottom image",result_im2)
+#cv2.waitKey(0)
+
+# FLANN parameters
+flann_index_lsh = 6
+index_params = dict(algorithm=flann_index_lsh,
+                    table_number=12,
+                    key_size=20,
+                    multi_probe_level=2)
+search_params = dict(checks=100)  # or pass empty dictionary
+
+# create FLANN
+flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+# perform matching
+flann_matches = flann.knnMatch(des1, des2, k=2)
+
+# Need to draw only good matches, so create a mask
+matches_mask = [[0, 0] for i in range(len(flann_matches))]
+
+# ratio test as per Lowe's paper
+good = []
+for index in range(len(flann_matches)):
+    if len(flann_matches[index]) == 2:
+        m, n = flann_matches[index]
+        if m.distance < 0.8 * n.distance:  # 0.8 is threshold of ratio testing
+            matches_mask[index] = [1, 0]
+            good.append(flann_matches[index])
+
+draw_params = dict(
+    singlePointColor=(255, 0, 0),
+    matchesMask=matches_mask,
+    flags=2)
+
+img3 = cv2.drawMatchesKnn(topGray, kp1, bottomGray, kp2, flann_matches, None, **draw_params)
+cv2.imshow("Final image",img3)
 #%% SIFT - Use Difference of Gaussians (DoG) (week 7)
 # in order to use SIFT we use DoG to detect BLOBs. DetectBlobs does this.
 # set parameters
