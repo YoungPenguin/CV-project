@@ -64,10 +64,66 @@ good = []
 for m,n in matches:
     if m.distance < 0.75*n.distance:
         good.append([m])
+
 # cv.drawMatchesKnn expects list of lists as matches.
 plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
+
+#%% Find homography
+
+flattened = [val for sublist in good for val in sublist]
+
+src_pts = np.float32([ kp1[m.queryIdx].pt for m in flattened ]).reshape(-1,1,2)
+dst_pts = np.float32([ kp2[m.trainIdx].pt for m in flattened ]).reshape(-1,1,2)
+M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+matchesMask = mask.ravel().tolist()
+
+h,w = topGray.shape
+pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+dst = cv2.perspectiveTransform(pts,M)
+bottomGray = cv2.polylines(bottomGray,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+
+draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+                   singlePointColor = None,
+                   matchesMask = matchesMask, # draw only inliers
+                   flags = 2)
+img3 = cv2.drawMatches(topGray,kp1,bottomGray,kp2,flattened,None,**draw_params)
+plt.imshow(img3, 'gray'),plt.show()
+
+#%% Stitching
+H = M
+
+# https://datahacker.rs/005-how-to-create-a-panorama-image-using-opencv-with-python/
+def warpImages(img1, img2, H):
+
+  rows1, cols1 = img1.shape[:2]
+  rows2, cols2 = img2.shape[:2]
+
+  list_of_points_1 = np.float32([[0,0], [0, rows1],[cols1, rows1], [cols1, 0]]).reshape(-1, 1, 2)
+  temp_points = np.float32([[0,0], [0,rows2], [cols2,rows2], [cols2,0]]).reshape(-1,1,2)
+
+  # When we have established a homography we need to warp perspective
+  # Change field of view
+  list_of_points_2 = cv2.perspectiveTransform(temp_points, H)
+
+  list_of_points = np.concatenate((list_of_points_1,list_of_points_2), axis=0)
+
+  [x_min, y_min] = np.int32(list_of_points.min(axis=0).ravel() - 0.5)
+  [x_max, y_max] = np.int32(list_of_points.max(axis=0).ravel() + 0.5)
+  
+  translation_dist = [-x_min,-y_min]
+  
+  H_translation = np.array([[1, 0, translation_dist[0]], [0, 1, translation_dist[1]], [0, 0, 1]])
+
+  output_img = cv2.warpPerspective(img2, H_translation.dot(H), (x_max-x_min, y_max-y_min))
+  output_img[translation_dist[1]:rows1+translation_dist[1], translation_dist[0]:cols1+translation_dist[0]] = img1
+
+  return output_img
+
+output = warpImages(bottomGray, topGray, H)
+plt.imshow(output)
+plt.show()
 
 #%% Harris corners (week 6)
 # convert to gray-scale
