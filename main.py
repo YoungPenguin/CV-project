@@ -180,8 +180,8 @@ eps = 1.0 # eps > 0.5
 k = 0.1 # k < 0.2
 tau = 0 # tau ~ 0 ([-0.5;0.5])
 
-ctop = cvfunctions.cornerDetector(topGray, s, eps, k, tau)
-cbot = cvfunctions.cornerDetector(bottomGray, s, eps, k, tau)
+ctop = cvfunctions.cornerDetector(topGray/255.0, s, eps, k, tau)
+cbot = cvfunctions.cornerDetector(bottomGray/255.0, s, eps, k, tau)
 
 # plot image and corners
 fig, ax = plt.subplots(figsize = (20,10), nrows = 1, ncols = 2)
