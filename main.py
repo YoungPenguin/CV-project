@@ -21,8 +21,8 @@ im = cv2.imread('images/x-ray/'+filename)
 full,top,bottom = pre.splitY(0.3,im)
 
 # convert to gray scale
-topGray = cv2.cvtColor(top, cv2.COLOR_RGB2GRAY).astype(np.float)/255.0
-bottomGray = cv2.cvtColor(bottom, cv2.COLOR_RGB2GRAY).astype(np.float)/255.0
+topGray = cv2.cvtColor(top, cv2.COLOR_BGR2GRAY)
+bottomGray = cv2.cvtColor(bottom, cv2.COLOR_BGR2GRAY)
 
 fig, ax = plt.subplots(1,3)
 ax[0].imshow(top)
@@ -39,8 +39,8 @@ n = 3 # n ~ 3
 thres = 0.01 # thres ~ 0.01
 
 # find blobs
-blobsTop = cvfunctions.detectBlobs(topGray, sigma, n, thres)
-blobsBot = cvfunctions.detectBlobs(bottomGray, sigma, n, thres)
+blobsTop = cvfunctions.detectBlobs(topGray/255.0, sigma, n, thres)
+blobsBot = cvfunctions.detectBlobs(bottomGray/255.0, sigma, n, thres)
 
 # show blobs
 fig, ax = plt.subplots(figsize = (20,10), nrows = 1, ncols = 2)
