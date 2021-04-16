@@ -181,6 +181,8 @@ img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawM
 plt.imshow(img3),plt.show()
 
 #%%
+## Detect, descript, match, stitch using Homography matrix
+
 
 ## Feature matching
 # Use Hamming distance for ORB
