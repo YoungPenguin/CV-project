@@ -146,6 +146,7 @@ ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
 #%% Harris corners (brief descriptors)
+cv2.destroyAllWindows()
 
 def brief_descriptor(im1, im2, cim1, cim2):
 
@@ -159,15 +160,27 @@ def brief_descriptor(im1, im2, cim1, cim2):
 
     (kps1, features1) = extractor.compute(im1, keypoints_im1)
     (kps2, features2) = extractor.compute(im2, keypoints_im2)
-    return (features1, features2)
+    return kps1, kps2, features1, features2
 
-(f1, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
-
-matcher = cv2.BFMatcher(cv2.NORM_L1)
+kps1, kps2, f1, f2 = brief_descriptor(topGray, bottomGray, ctop, cbot)
 
 descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
 descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
 
+# Using Brute Force matcher with Hamming distance
+# create BFMatcher object
+bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True) # to use L2-norm, write cv2.NORM_L2
+
+# Match descriptors
+#matches = bf.match(f1,f2)
+matches = bf.match(descriptTop,descriptBot)
+
+# Sort them in the order of their distance.
+matches = sorted(matches, key = lambda x:x.distance)
+# Draw first 10 matches.
+#img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+img3 = cv2.drawMatches(topGray, pts_top, bottomGray, pts_bot, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+cv2.imshow("Harris corner detector and BRIEF descriptor, BF matcher",img3)
 #%%
 ## Detect, descript, match, stitch using Homography matrix
 
