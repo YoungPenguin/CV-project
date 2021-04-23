@@ -100,28 +100,7 @@ img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMat
 plt.imshow(img3),plt.show()
 
 # Find homography
-
-flattened = [val for sublist in good for val in sublist]
-
-src_pts = np.float32([ kp1[m.queryIdx].pt for m in flattened ]).reshape(-1,1,2)
-dst_pts = np.float32([ kp2[m.trainIdx].pt for m in flattened ]).reshape(-1,1,2)
-H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
-matchesMask = mask.ravel().tolist()
-
-h,w = topGray.shape
-pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-dst = cv2.perspectiveTransform(pts,H)
-bottomGray_copy = bottomGray.copy()
-bottomGrayLine = cv2.polylines(bottomGray_copy,[np.int32(dst)],True,255,3, cv2.LINE_AA)
-
-draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-                   singlePointColor = None,
-                   matchesMask = matchesMask, # draw only inliers
-                   flags = 2)
-img3 = cv2.drawMatches(topGray,kp1,bottomGrayLine,kp2,flattened,None,**draw_params)
-plt.imshow(img3, 'gray'),plt.show()
-
-#H = cvfunctions.findHomography(src_pts, dst_pts)
+H, topGray, bottomGrayLine = cvfunctions.Homography(good, kp1, kp2, topGray, bottomGray)
 
 # Stitching
 output = cvfunctions.warpImages(bottomGray, topGray, H)
