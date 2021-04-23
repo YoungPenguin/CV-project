@@ -58,8 +58,9 @@ matches = bf.match(des1,des2)
 matches = sorted(matches, key = lambda x:x.distance)
 # Draw first 10 matches.
 img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-cv2.imshow("ORB detector and descriptor, BF matcher",img3)
-
+cv2.imshow("ORB detector and descriptor, BF matcher", img3)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 #%% SIFT - Use Difference of Gaussians (DoG) (week 7)
 # in order to use SIFT we use DoG to detect BLOBs. DetectBlobs does this.
 # set parameters
@@ -97,8 +98,9 @@ for m,n in matches:
 # cv.drawMatchesKnn expects list of lists as matches.
 plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-plt.imshow(img3),plt.show()
-
+cv2.imshow('SIFT', img3)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 # Find homography
 
 flattened = [val for sublist in good for val in sublist]
@@ -119,8 +121,9 @@ draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                    matchesMask = matchesMask, # draw only inliers
                    flags = 2)
 img3 = cv2.drawMatches(topGray,kp1,bottomGrayLine,kp2,flattened,None,**draw_params)
-plt.imshow(img3, 'gray'),plt.show()
-
+cv2.imshow('gray', img3)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 #H = cvfunctions.findHomography(src_pts, dst_pts)
 
 # Stitching
@@ -173,13 +176,18 @@ matches = sorted(matches, key = lambda x:x.distance)
 #img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 #cv2.imshow("Harris corners and brief descriptor, BF matcher",img3)
 
-((kps1, features1), (kps2, features2)) = brief_descriptor(topGray, bottomGray, ctop, cbot)
-
+(kps1, features1, kps2, features2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+print(features1)
+print(features2)
 matcher = cv2.BFMatcher(cv2.NORM_L2)
 
 #%%
 descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 7)
 descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 7)
+
+print("unique")
+print(np.unique(np.array([len(x) for x in descriptTop])))
+print(np.unique(np.array([len(x) for x in descriptBot])))
 
 matches = matcher.knnMatch(features1,features2,k=2)
 # Apply ratio test
@@ -192,7 +200,6 @@ print(len(good))
 plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
-
 #%%
 ## Detect, descript, match, stitch using Homography matrix
 
