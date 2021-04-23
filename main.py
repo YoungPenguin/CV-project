@@ -24,7 +24,7 @@ full,top,bottom = pre.splitY(0.3,im)
 topGray = cv2.cvtColor(top, cv2.COLOR_BGR2GRAY)
 bottomGray = cv2.cvtColor(bottom, cv2.COLOR_BGR2GRAY)
 
-fig, axs = plt.subplots(1, 3)
+fig, axs = plt.subplots(1, 3, figsize=(8,15))
 axs = axs.flatten()
 for img, ax in zip([top,full,bottom], axs):
     ax.axes.get_xaxis().set_visible(False)
