@@ -81,4 +81,33 @@ ax.imshow(img3)
 ax.set_title('Matched ORB keypoints (best ' + str(best_x_matches)+ ' using Hamming distance)')
 plt.show()
 
+# %% Homography estimation and image stitching
+src_pts = np.float32([ kp1[m.queryIdx].pt for m in matches ]).reshape(-1,1,2)
+dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ]).reshape(-1,1,2)
+H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+
+output = cvfunctions.warpImages(bottom, top, H)
+
+fig, axs = plt.subplots(1, 3, figsize=(15,5))
+axs = axs.flatten()
+for img, ax in zip([bottom,output,top], axs):
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+    ax.imshow(img)
+fig.suptitle('Stitched image based on ORB matches')
+axs[0].set_title('Bottom')
+axs[1].set_title('Stitched image')
+axs[2].set_title('Top')
+plt.show()
+
+fig, axs = plt.subplots(1, 2, figsize=(15,6))
+axs = axs.flatten()
+for img, ax in zip([output,full], axs):
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+    ax.imshow(img)
+fig.suptitle('Stitched image based on ORB matches')
+axs[0].set_title('Stitched image')
+axs[1].set_title('Original')
+plt.show()
 # %%
