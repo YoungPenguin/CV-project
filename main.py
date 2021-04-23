@@ -30,6 +30,7 @@ ax[1].imshow(full)
 ax[2].imshow(bottom)
 
 #%% Feature extraction and description
+cv2.destroyAllWindows()
 # ORB
 # create ORB dectector
 orb = cv2.ORB_create(nfeatures=3000)  # default features is 500
@@ -146,7 +147,7 @@ ax[1].scatter(cbot[0,:], cbot[1,:],s=25,c='r',marker='.')
 plt.show()
 
 #%% Harris corners (brief descriptors)
-
+cv2.destroyAllWindows()
 def brief_descriptor(im1, im2, cim1, cim2):
 
     extractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
@@ -159,14 +160,22 @@ def brief_descriptor(im1, im2, cim1, cim2):
 
     (kps1, features1) = extractor.compute(im1, keypoints_im1)
     (kps2, features2) = extractor.compute(im2, keypoints_im2)
-    return (features1, features2)
+    return (kps1, features1, kps2, features2)
 
-(f1, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+(kps1, f1, kps2, f2) = brief_descriptor(topGray, bottomGray, ctop, cbot)
 
-matcher = cv2.BFMatcher(cv2.NORM_L1)
+bf = cv2.BFMatcher(cv2.NORM_L2)
+matches = bf.match(f1, f2)
 
-descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 5)
-descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 5)
+# Sort them in the order of their distance.
+matches = sorted(matches, key = lambda x:x.distance)
+# Draw first 10 matches.
+#img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+#cv2.imshow("Harris corners and brief descriptor, BF matcher",img3)
+
+#%%
+descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 7)
+descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 7)
 
 #%%
 
