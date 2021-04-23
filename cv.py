@@ -379,7 +379,6 @@ def warpImages(img1, img2, H):
 def simpleDescriptor(img, pts, win):
     # win is a win x win window around the point
     # normalise image
-    #img_ = img/255.0
     N = pts.shape[-1]
     win_ = int(np.floor(win/2))
     descriptors = []
@@ -390,7 +389,12 @@ def simpleDescriptor(img, pts, win):
         if x < win_ or y < win_ or x + win_ > img.shape[1] or y + win_ > img.shape[0]:
             i += 1
         else:
-            pts_out.append([x,y])
+            pts_out.append(np.array([x,y]))
             temp = img[y-win_:y+win_+1,x-win_:x+win_+1]
-            descriptors.append(temp.flatten())
+            if len(temp.flatten()) < win*win:
+                i+=1
+            else:
+                descriptors.append(temp.flatten())
+    descriptors = np.array(descriptors).reshape((len(descriptors),win*win))
+            
     return descriptors, pts_out
