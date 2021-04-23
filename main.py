@@ -173,11 +173,29 @@ matches = sorted(matches, key = lambda x:x.distance)
 #img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 #cv2.imshow("Harris corners and brief descriptor, BF matcher",img3)
 
+((kps1, features1), (kps2, features2)) = brief_descriptor(topGray, bottomGray, ctop, cbot)
+
+matcher = cv2.BFMatcher(cv2.NORM_L2)
+
 #%%
 descriptTop, pts_top = cvfunctions.simpleDescriptor(topGray, ctop, 7)
 descriptBot, pts_bot = cvfunctions.simpleDescriptor(bottomGray, cbot, 7)
 
+matches = matcher.knnMatch(features1,features2,k=2)
+# Apply ratio test
+good = []
+for m,n in matches:
+    if m.distance < 0.75*n.distance:
+        good.append([m])
+print(len(good))
+
+plt.figure(figsize=(30,20))
+img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+plt.imshow(img3),plt.show()
+
 #%%
+## Detect, descript, match, stitch using Homography matrix
+
 
 ## Feature matching
 # Use Hamming distance for ORB
