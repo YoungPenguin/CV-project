@@ -193,6 +193,20 @@ plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
 
+# Using Brute Force matcher with Hamming distance
+# create BFMatcher object
+bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True) # to use L2-norm, write cv2.NORM_L2
+
+# Match descriptors
+#matches = bf.match(f1,f2)
+matches = bf.match(descriptTop,descriptBot)
+
+# Sort them in the order of their distance.
+matches = sorted(matches, key = lambda x:x.distance)
+# Draw first 10 matches.
+#img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+img3 = cv2.drawMatches(topGray, pts_top, bottomGray, pts_bot, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+cv2.imshow("Harris corner detector and BRIEF descriptor, BF matcher",img3)
 #%%
 ## Detect, descript, match, stitch using Homography matrix
 
