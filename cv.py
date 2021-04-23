@@ -396,5 +396,22 @@ def simpleDescriptor(img, pts, win):
             else:
                 descriptors.append(temp.flatten())
     descriptors = np.array(descriptors).reshape((len(descriptors),win*win))
-            
-    return descriptors, pts_out
+    
+    kpts_prep = list(zip(np.array(pts[0]).astype(float), np.array(pts[1]).astype(float)))
+    kpts = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts_prep]
+
+    return descriptors, kpts
+
+def brief_descriptor(im1, im2, cim1, cim2):
+
+    extractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+    kpts1_prep = list(zip(np.array(cim1[0]).astype(float), np.array(cim1[1]).astype(float)))
+    keypoints_im1 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts1_prep]
+
+    kpts2_prep = list(zip(np.array(cim2[0]).astype(float), np.array(cim2[1]).astype(float)))
+    keypoints_im2 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts2_prep]
+
+    (kps1, features1) = extractor.compute(im1, keypoints_im1)
+    (kps2, features2) = extractor.compute(im2, keypoints_im2)
+    return (kps1, features1, kps2, features2)
