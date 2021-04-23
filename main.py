@@ -24,10 +24,16 @@ full,top,bottom = pre.splitY(0.3,im)
 topGray = cv2.cvtColor(top, cv2.COLOR_BGR2GRAY)
 bottomGray = cv2.cvtColor(bottom, cv2.COLOR_BGR2GRAY)
 
-fig, ax = plt.subplots(1,3)
-ax[0].imshow(top)
-ax[1].imshow(full)
-ax[2].imshow(bottom)
+fig, axs = plt.subplots(1, 3)
+axs = axs.flatten()
+for img, ax in zip([top,full,bottom], axs):
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+    ax.imshow(img)
+fig.suptitle('Image split')
+axs[0].set_title('Top part')
+axs[1].set_title('Full image')
+axs[2].set_title('Bottom part')
 
 #%% Feature extraction and description
 cv2.destroyAllWindows()
@@ -59,7 +65,6 @@ matches = sorted(matches, key = lambda x:x.distance)
 # Draw first 10 matches.
 img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 cv2.imshow("ORB detector and descriptor, BF matcher", img3)
-cv2.waitKey(0)
 cv2.destroyAllWindows()
 #%% SIFT - Use Difference of Gaussians (DoG) (week 7)
 # in order to use SIFT we use DoG to detect BLOBs. DetectBlobs does this.
@@ -78,6 +83,7 @@ ax[0].imshow(topGray,cmap='gray')
 ax[0].scatter(blobsTop[0,:], blobsTop[1,:],s=25,c='r',marker='.')
 ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(blobsBot[0,:], blobsBot[1,:],s=25,c='r',marker='.')
+plt.title = 'Blobs'
 plt.show()
 
 # Initiate SIFT detector
@@ -99,8 +105,7 @@ for m,n in matches:
 plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kp1,bottomGray,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 cv2.imshow('SIFT', img3)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+
 # Find homography
 
 flattened = [val for sublist in good for val in sublist]
@@ -122,8 +127,6 @@ draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                    flags = 2)
 img3 = cv2.drawMatches(topGray,kp1,bottomGrayLine,kp2,flattened,None,**draw_params)
 cv2.imshow('gray', img3)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
 #H = cvfunctions.findHomography(src_pts, dst_pts)
 
 # Stitching
@@ -200,6 +203,21 @@ print(len(good))
 plt.figure(figsize=(30,20))
 img3 = cv2.drawMatchesKnn(topGray,kps1,bottomGray,kps2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.imshow(img3),plt.show()
+
+# Using Brute Force matcher with Hamming distance
+# create BFMatcher object
+bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True) # to use L2-norm, write cv2.NORM_L2
+
+# Match descriptors
+#matches = bf.match(f1,f2)
+matches = bf.match(descriptTop,descriptBot)
+
+# Sort them in the order of their distance.
+matches = sorted(matches, key = lambda x:x.distance)
+# Draw first 10 matches.
+#img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+img3 = cv2.drawMatches(topGray, pts_top, bottomGray, pts_bot, matches[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+cv2.imshow("Harris corner detector and BRIEF descriptor, BF matcher",img3)
 #%%
 ## Detect, descript, match, stitch using Homography matrix
 
