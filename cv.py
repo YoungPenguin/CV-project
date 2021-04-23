@@ -9,12 +9,13 @@ import numpy as np
 import cv2
 from scipy.ndimage import maximum_filter
 import random
+import matplotlib.pyplot as plt
 
 def box3d(n):
-   N = 15*n;
+   N = 15*n
    Q = np.zeros((N,3))
-   val = np.linspace(-0.5,0.5,n);
-   span = val;
+   val = np.linspace(-0.5,0.5,n)
+   span = val
    for j in range(0,5-1):
        span = np.append(span,val)
 
@@ -104,10 +105,10 @@ def RotationMatrix(theta):
     return R
 
 def triangulate(q1,q2,P1,P2):
-    x1 = q1[0];
-    y1 = q1[1];
-    x2 = q2[0];
-    y2 = q2[1];
+    x1 = q1[0]
+    y1 = q1[1]
+    x2 = q2[0]
+    y2 = q2[1]
     B = np.array([P1[2,:]*x1-P1[0,:], P1[2,:]*y1-P1[1,:], P2[2,:]*x2-P2[0,:], P2[2,:]*y2-P2[1,:]])
     return B
 
@@ -150,8 +151,8 @@ def estimateHomography(q1,q2):
     V = VT.T
     Hnorm = V[:,-1].reshape((3,3)).T
     
-    T1 = NormalizationMatrix(q1);
-    T2 = NormalizationMatrix(q2);
+    T1 = NormalizationMatrix(q1)
+    T2 = NormalizationMatrix(q2)
     
     H = np.linalg.inv(T2)@Hnorm@T1 
     return H
@@ -162,10 +163,10 @@ def gaussian1DKernel(s):
     # s = gaussian width (sigma)
     kSize = 4; # kernelsize
     t = s**2
-    v = kSize*s;
-    x = np.arange(-np.ceil(v+1),np.ceil(v+1));
-    g = np.exp(-x**2/(2*t));
-    gx = -x/(t)*g;
+    v = kSize*s
+    x = np.arange(-np.ceil(v+1),np.ceil(v+1))
+    g = np.exp(-x**2/(2*t))
+    gx = -x/(t)*g
     g = g.reshape((-1,1))
     gx = gx.reshape((-1,1))
     
@@ -178,9 +179,9 @@ def gaussianSmoothing(im, s):
     # sigma = gaussian width
 
     g, gx = gaussian1DKernel(s)
-    I = cv2.filter2D(cv2.filter2D(im,-1,g),-1,g.T);
-    Ix = cv2.filter2D(cv2.filter2D(im,-1,gx),-1,g.T);
-    Iy = cv2.filter2D(cv2.filter2D(im,-1,g),-1,gx.T);
+    I = cv2.filter2D(cv2.filter2D(im,-1,g),-1,g.T)
+    Ix = cv2.filter2D(cv2.filter2D(im,-1,gx),-1,g.T)
+    Iy = cv2.filter2D(cv2.filter2D(im,-1,g),-1,gx.T)
     
     return I, Ix, Iy
 
@@ -262,7 +263,7 @@ def scaleSpaced(im, sigma, n):
     Lg = im
     for i in range(m):
         sigma_new = sigma*k**i
-        t = sigma_new**2;
+        t = sigma_new**2
         g, dg, ddg, dddg = getGaussDerivative(t)
         im_scales[:,:,i] = cv2.filter2D(cv2.filter2D(im, -1, g), -1, g.T)
     
@@ -285,7 +286,7 @@ def detectBlobs(im, sigma, n, thres):
     DoG = differenceOfGaussian(im, sigma, n)
     
     footprint = np.ones((3,3,3))
-    footprint[1,1,1]=0;
+    footprint[1,1,1]=0
     maxs = maximum_filter(np.abs(DoG), footprint=footprint)
     maxs = maxs[:,:,1:DoG.shape[-1]-1] # don't need the first and last
     
@@ -335,19 +336,7 @@ def localiseKeypoints(DoG, blobs, n):
         
     return offsets, np.array(Js).T, Hs, np.array(keypoints).T
 
-def findHomography(src, dest): # for multiple points
-    N = len(src)
-    A = []
-    for i in range(N):
-        x, y = src[i,0,0], src[i,0,1]
-        xp, yp = dest[i,0,0], dest[i,0,1]
-        A.append([x, y, 1, 0, 0, 0, -x * xp, -xp * y, -xp])
-        A.append([0, 0, 0, x, y, 1, -yp * x, -yp * y, -yp])
-    A = np.asarray(A)
-    U, S, Vh = np.linalg.svd(A)
-    L = Vh[-1, :] / Vh[-1, -1]
-    H = L.reshape(3, 3)
-    return H
+
 
 # https://datahacker.rs/005-how-to-create-a-panorama-image-using-opencv-with-python/
 def warpImages(img1, img2, H):
@@ -415,3 +404,26 @@ def brief_descriptor(im1, im2, cim1, cim2):
     (kps1, features1) = extractor.compute(im1, keypoints_im1)
     (kps2, features2) = extractor.compute(im2, keypoints_im2)
     return (kps1, features1, kps2, features2)
+
+def Homography(good1, kp11, kp21, topGray, bottomGray):
+    flattened = [val for sublist in good1 for val in sublist]
+
+    src_pts = np.float32([ kp11[m.queryIdx].pt for m in flattened ]).reshape(-1,1,2)
+    dst_pts = np.float32([ kp21[m.trainIdx].pt for m in flattened ]).reshape(-1,1,2)
+    H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+    matchesMask = mask.ravel().tolist()
+
+    h,w = topGray.shape
+    pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+    dst = cv2.perspectiveTransform(pts,H)
+    bottomGray_copy = bottomGray.copy()
+    bottomGrayLine = cv2.polylines(bottomGray_copy,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+
+    draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+                       singlePointColor = None,
+                       matchesMask = matchesMask, # draw only inliers
+                       flags = 2)
+
+    img3 = cv2.drawMatches(topGray,kp11,bottomGrayLine,kp21,flattened,None,**draw_params)
+    plt.imshow(img3, 'gray'),plt.show()
+    return H,topGray,bottomGrayLine
