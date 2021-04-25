@@ -61,12 +61,12 @@ matches = bf.knnMatch(f1,f2,k=2)
 # Apply ratio test
 good_match = []
 for m,n in matches:
-    if m.distance < 0.5*n.distance:
+    if m.distance < 0.75*n.distance:
         good_match.append(m)
 # Sort them in the order of their distance.
 
 # show matches
-img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, good_match,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+img3 = cv2.drawMatches(topGray, kps1, bottomGray, kps2, good_match[:150],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 plt.figure(figsize=(30,20))
 plt.imshow(img3),plt.show()
 
@@ -76,13 +76,13 @@ plt.imshow(img3),plt.show()
 # Find homography
 
 flattened = [val for sublist in matches for val in sublist]
-src_pts = np.float32([ kps1[m.queryIdx].pt for m in flattened ]).reshape(-1,1,2)
-dst_pts = np.float32([ kps2[m.trainIdx].pt for m in flattened ]).reshape(-1,1,2)
+src_pts = np.float32([ kps1[m.queryIdx].pt for m in good_match ]).reshape(-1,1,2)
+dst_pts = np.float32([ kps2[m.trainIdx].pt for m in good_match]).reshape(-1,1,2)
 H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 
 ######################################################
 #%% IMAGE STITCHING
 ######################################################
-output = cvfunctions.warpImages(bottomGray, topGray, H)
-plt.imshow(output)
+im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
+plt.imshow(im_stitched, cmap = 'gray')
 plt.show()
