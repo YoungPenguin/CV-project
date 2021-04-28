@@ -11,12 +11,12 @@ import cv as cvfunctions
 
 #%%
 ## Image preprocessing 
-# choose 1 image: NORMAL2-IM-0329-0001.jpeg
-# divide image into two parts with 30% overlap, use open cv
 
+# choose 1 image: NORMAL2-IM-0329-0001.jpeg
 filename = 'NORMAL2-IM-0329-0001.jpeg'
 im = cv2.imread('images/x-ray/'+filename)
 
+# divide image into two parts with 30% overlap
 full,top,bottom = pre.splitY(0.3,im)
 
 # convert to gray scale
