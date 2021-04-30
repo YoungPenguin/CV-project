@@ -37,7 +37,7 @@ ax[2].imshow(bottom)
 #%% FEATURE EXTRACTION
 ######################################################
 # find corners
-s = 35 # s = [15;50]
+s = 15 # s = [15;50]
 eps = 1.3 # eps > 0.5
 k = 0.01 # k ~ 0.01
 tau = 0 # tau ~ 0 ([-0.5;0.5])
@@ -56,7 +56,6 @@ plt.show()
 #%% FEATURE DESCRIPTOR
 ######################################################
 # sift descriptor
-
 sift = cv2.SIFT_create()
 
 kps1 = cvfunctions.opencv_keypoints(ctop, 3)
@@ -65,12 +64,17 @@ kps2 = cvfunctions.opencv_keypoints(cbot, 3)
 ######################################################
 
 print("compute orientations")
-orientations = corner_orientations(topGray, ctop.T, octagon(3,2))
+ori1= np.rad2deg(corner_orientations(topGray, ctop.T, octagon(3,2)))
+ori2 = np.rad2deg(corner_orientations(topGray, cbot.T, octagon(3,2)))
 
-print(np.rad2degree(orientations))
 print("finished computing orientations")
 
-#%%
+for i in range(len(ori1)):
+    kps1[i].angle = ori1[i]
+
+for i in range(len(ori2)):
+    kps2[i].angle = ori2[i]
+
 kps1, f1 = sift.compute(topGray, kps1)
 kps2, f2 = sift.compute(bottomGray, kps2)
 
