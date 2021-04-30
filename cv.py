@@ -218,7 +218,7 @@ def cornerDetector(im, s, eps, k, tau):
     
     c = np.array([row,col])
     
-    return c
+    return c, r
 
 def getGaussDerivative(t):
     '''
