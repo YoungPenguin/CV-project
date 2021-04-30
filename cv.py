@@ -218,7 +218,7 @@ def cornerDetector(im, s, eps, k, tau):
     
     c = np.array([row,col])
     
-    return c
+    return c, r
 
 def getGaussDerivative(t):
     '''
@@ -391,15 +391,17 @@ def simpleDescriptor(img, pts, win):
 
     return descriptors, kpts
 
+def opencv_keypoints(keypoints, size=1):
+    kpts_prep = list(zip(np.array(keypoints[0]).astype(float), np.array(keypoints[1]).astype(float)))
+    keypoints_cv = [cv2.KeyPoint(x[1], x[0], size) for x in kpts_prep]
+    return keypoints_cv
+
 def brief_descriptor(im1, im2, cim1, cim2):
 
     extractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
 
-    kpts1_prep = list(zip(np.array(cim1[0]).astype(float), np.array(cim1[1]).astype(float)))
-    keypoints_im1 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts1_prep]
-
-    kpts2_prep = list(zip(np.array(cim2[0]).astype(float), np.array(cim2[1]).astype(float)))
-    keypoints_im2 = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts2_prep]
+    keypoints_im1 = opencv_keypoints(cim1)
+    keypoints_im2 = opencv_keypoints(cim2)
 
     (kps1, features1) = extractor.compute(im1, keypoints_im1)
     (kps2, features2) = extractor.compute(im2, keypoints_im2)
