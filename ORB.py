@@ -8,6 +8,7 @@ import matplotlib.image as mpimg
 import numpy as np
 import preprocessing as pre
 import cv as cvfunctions
+from scipy import ndimage
 
 #%%
 ## Image preprocessing 
@@ -18,6 +19,15 @@ im = cv2.imread('images/x-ray/'+filename)
 
 # divide image into two parts with 30% overlap
 full,top,bottom = pre.splitY(0.3,im)
+top = ndimage.rotate(top, 90)
+
+scale_percent = 80 # percent of original size
+width = int(top.shape[1] * scale_percent / 100)
+height = int(top.shape[0] * scale_percent / 100)
+dim = (width, height)
+  
+# resize image
+top = cv2.resize(top, dim, interpolation = cv2.INTER_AREA)
 
 # convert to gray scale
 topGray = cv2.cvtColor(top, cv2.COLOR_BGR2GRAY)
@@ -33,6 +43,7 @@ fig.suptitle('Image split')
 axs[0].set_title('Top part')
 axs[1].set_title('Full image')
 axs[2].set_title('Bottom part')
+plt.show()
 
 #%% Feature extraction and description
 # ORB
@@ -70,8 +81,8 @@ matches = bf.match(des1,des2)
 matches = sorted(matches, key = lambda x:x.distance)
 # Draw first 10 matches.
 
+#best_x_matches = len(matches)
 best_x_matches = 150
-best_x_matches = len(matches)
 img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:best_x_matches],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
 f, ax = plt.subplots(figsize=(15,5))
@@ -82,8 +93,8 @@ ax.set_title('Matched ORB keypoints (best ' + str(best_x_matches)+ ' using Hammi
 plt.show()
 
 # %% Homography estimation and image stitching
-src_pts = np.float32([ kp1[m.queryIdx].pt for m in matches ]).reshape(-1,1,2)
-dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ]).reshape(-1,1,2)
+src_pts = np.float32([ kp1[m.queryIdx].pt for m in matches ])
+dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ])
 H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 
 output = cvfunctions.warpImages(bottom, top, H)
