@@ -206,9 +206,9 @@ def harrisMeasure(im, s, eps, k):
 def cornerDetector(im, s, eps, k, tau):
     # c = list of points where r is the local maximum and larger than some relative threshold i.e. r(x,y) > tau  
     r = harrisMeasure(im, s, eps, k)
-    footprint = np.array([[0, 1, 0],
+    footprint = np.array([[1, 1, 1],
                           [1, 0, 1],
-                          [0, 1, 0]])
+                          [1, 1, 1]])
     maxs = maximum_filter(r, footprint=footprint)
     col,row = np.where(maxs!=0) # get indices of local maxima
     vals = r[col,row]
@@ -217,8 +217,9 @@ def cornerDetector(im, s, eps, k, tau):
     col = col[vals > tau]
     
     c = np.array([row,col])
+    rout = r[c[1,:],c[0,:]]
     
-    return c, r
+    return c, rout
 
 def getGaussDerivative(t):
     '''
