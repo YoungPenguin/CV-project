@@ -59,8 +59,8 @@ plt.show()
 
 sift = cv2.SIFT_create()
 
-kps1 = cvfunctions.opencv_keypoints(ctop)
-kps2 = cvfunctions.opencv_keypoints(cbot)
+kps1 = cvfunctions.opencv_keypoints(ctop, 3)
+kps2 = cvfunctions.opencv_keypoints(cbot, 3)
 #%% ORIENTATION
 ######################################################
 
