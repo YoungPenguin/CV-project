@@ -19,7 +19,7 @@ im = cv2.imread('images/x-ray/'+filename,0)
 
 # divide image into two parts with 30% overlap
 full,topGray,bottomGray = pre.splitY(0.3,im)
-topGray = ndimage.rotate(topGray, 90)
+topGray = ndimage.rotate(topGray, 30)
 
 scale_percent = 80 # percent of original size
 width = int(topGray.shape[1] * scale_percent / 100)
@@ -78,7 +78,7 @@ matches = sorted(matches, key = lambda x:x.distance)
 # Draw first 10 matches.
 
 #best_x_matches = len(matches)
-best_x_matches = 150
+best_x_matches = 100
 img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:best_x_matches],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
 f, ax = plt.subplots(figsize=(15,5))
@@ -86,6 +86,7 @@ ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
 ax.imshow(img3)
 ax.set_title('Matched ORB keypoints (best ' + str(best_x_matches)+ ' using Hamming distance)')
+f.savefig('images/orb_matches.png',bbox_inches='tight')
 plt.show()
 
 # %% Homography estimation and image stitching
