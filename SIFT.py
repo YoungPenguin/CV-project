@@ -10,6 +10,7 @@ import preprocessing as pre
 import cv as cvfunctions
 
 #%%
+cv2.destroyAllWindows() 
 ## Image preprocessing 
 # choose 1 image: NORMAL2-IM-0329-0001.jpeg
 # divide image into two parts with 30% overlap, use open cv
@@ -24,13 +25,16 @@ topGray = cv2.cvtColor(top, cv2.COLOR_BGR2GRAY)
 bottomGray = cv2.cvtColor(bottom, cv2.COLOR_BGR2GRAY)
 
 fig, ax = plt.subplots(1,3)
-ax[0].imshow(top)
-ax[1].imshow(full)
+ax[0].imshow(full)
+ax[0].axis('off')
+ax[1].imshow(top)
+ax[1].axis('off')
 ax[2].imshow(bottom)
+ax[2].axis('off')
 plt.show()
 #%% Feature detection
 # Set parametes
-sigma = 1.6
+sigma = 1.6#1.6
 n = 3 # n ~ 3
 thres = 0.01 # thres ~ 0.01
 
@@ -45,7 +49,6 @@ ax[1].imshow(bottomGray,cmap='gray')
 ax[1].scatter(blobsBot[0,:], blobsBot[1,:],s=25,c='r',marker='.')
 plt.title = 'Blobs'
 plt.show()
-
 #%% Feature description
 # Initiate SIFT detector 
 sift = cv2.SIFT_create()
@@ -73,7 +76,7 @@ for m,n in matches:
 im_matched = cv2.drawMatches(topGray, kp1, bottomGray, kp2, good_match,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 #im_matches = cv2.drawMatches(topGray, kp1, bottomGray, kp2, good_match,None,**draw_params)
 cv2.imshow('SIFT matches', im_matched)
-        
+plt.savefig('SIFT_matches.png')   
 #%% Image sticting using Homography matrix 
 src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match]).reshape(-1,1,2)
 dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_match]).reshape(-1,1,2)
@@ -87,7 +90,7 @@ im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
 plt.imshow(im_stitched, cmap='gray')
 plt.show()
 
-#%% EXTRA
+#%% OLD
 '''
 matchesMask = mask.ravel().tolist()
 h,w = topGray.shape
