@@ -393,7 +393,7 @@ def simpleDescriptor(img, pts, win):
 
 def opencv_keypoints(keypoints):
     kpts_prep = list(zip(np.array(keypoints[0]).astype(float), np.array(keypoints[1]).astype(float)))
-    keypoints_cv = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts1_prep]
+    keypoints_cv = [cv2.KeyPoint(x[1], x[0], 1) for x in kpts_prep]
     return keypoints_cv
 
 def brief_descriptor(im1, im2, cim1, cim2):
