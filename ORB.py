@@ -35,14 +35,17 @@ bottomGray = cv2.cvtColor(bottom, cv2.COLOR_BGR2GRAY)
 
 fig, axs = plt.subplots(1, 3, figsize=(15,5))
 axs = axs.flatten()
-for img, ax in zip([top,full,bottom], axs):
+for img, ax in zip([full,top,bottom], axs):
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
     ax.imshow(img)
 fig.suptitle('Image split')
-axs[0].set_title('Top part')
-axs[1].set_title('Full image')
+axs[0].set_title('Full image')
+axs[0].axis('off')
+axs[1].set_title('Top part')
+axs[1].axis('off')
 axs[2].set_title('Bottom part')
+axs[2].axis('off')
 plt.show()
 
 #%% Feature extraction and description
