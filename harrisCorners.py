@@ -58,10 +58,10 @@ plt.show()
 # sift descriptor
 sift = cv2.SIFT_create()
 
-kps1 = cvfunctions.opencv_keypoints(ctop)
-kps2 = cvfunctions.opencv_keypoints(cbot)
-
-#% ORIENTATION
+kps1 = cvfunctions.opencv_keypoints(ctop, 3)
+kps2 = cvfunctions.opencv_keypoints(cbot, 3)
+#%% ORIENTATION
+######################################################
 
 print("compute orientations")
 ori1= np.rad2deg(corner_orientations(topGray, ctop.T, octagon(3,2)))
@@ -71,7 +71,7 @@ print("finished computing orientations")
 
 for i in range(len(ori1)):
     kps1[i].angle = ori1[i]
-    
+
 for i in range(len(ori2)):
     kps2[i].angle = ori2[i]
 
