@@ -50,11 +50,19 @@ result_im2 = cv2.drawKeypoints(bottomGray, kp2, None,(255,0,0), flags=0)
 # Uing Brute Force matcher with Hamming distance
 # create BFMatcher object
 distance_method = cv2.NORM_HAMMING
-bf = cv2.BFMatcher(distance_method, crossCheck=True)
+bf = cv2.BFMatcher(distance_method)
 
 # Match descriptors
 matches = bf.match(des1,des2)
 
+
+matches_knn = bf.knnMatch(des1,des2,k=2)
+
+# Apply ratio test (Lowes ratio)
+good_matches = []
+for m,n in matches_knn:
+    if m.distance < 0.75*n.distance:
+        good_matches.append(m)
 
 # Sort them in the order of their distance.
 matches = sorted(matches, key = lambda x:x.distance)

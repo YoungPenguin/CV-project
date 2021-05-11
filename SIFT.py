@@ -55,7 +55,7 @@ start = time.time()
 
 #%% Feature decetion and description
 # Initiate SIFT detector 
-sift = cv2.SIFT_create(nOctaveLayers=3, contrastThreshold=0.04, sigma = 1.6, edgeThreshold = 5)
+sift = cv2.SIFT_create(nOctaveLayers=3, contrastThreshold=0.03, sigma = 1.6, edgeThreshold = 10)
 #sift = cv2.SIFT_create()
 # Find the keypoints and descriptors with SIFT
 kp1, des1 = sift.detectAndCompute(topGray,None)
@@ -98,7 +98,7 @@ print('Ran in ' + str(stop-start))
 f, ax = plt.subplots(figsize=(15,5))
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
-ax.imshow(im_stitched)
+ax.imshow(im_stitched, cmap='gray')
 ax.set_title('Matched SIFT keypoints')
 plt.show()
 
