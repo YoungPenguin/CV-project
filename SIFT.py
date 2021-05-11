@@ -9,6 +9,7 @@ import numpy as np
 import preprocessing as pre
 import cv as cvfunctions
 from scipy import ndimage
+import time
 
 #%% Image preprocessing 
 #cv2.destroyAllWindows() 
@@ -50,6 +51,8 @@ plt.show()
 topGray = top
 bottomGray = bottom
 
+start = time.time()
+
 #%% Feature decetion and description
 # Initiate SIFT detector 
 sift = cv2.SIFT_create(nOctaveLayers=3, contrastThreshold=0.04, sigma = 1.6, edgeThreshold = 5)
@@ -73,7 +76,7 @@ for m,n in matches:
 good_match = sorted(good_match, key = lambda x:x.distance)
         
 im_matched = cv2.drawMatches(topGray, kp1, bottomGray, kp2, good_match[:100],None,flags = cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-cv2.imshow('SIFT matches', im_matched)
+#cv2.imshow('SIFT matches', im_matched)
 #%% Image sticting using Homography matrix 
 #cv2.destroyAllWindows() 
 src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match]).reshape(-1,1,2)
@@ -87,6 +90,10 @@ dst = cv2.perspectiveTransform(pts,H)
 im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
 #plt.imshow(im_stitched, cmap='gray')
 #plt.show()
+
+stop = time.time()
+
+print('Ran in ' + str(stop-start))
 
 f, ax = plt.subplots(figsize=(15,5))
 ax.axes.get_xaxis().set_visible(False)

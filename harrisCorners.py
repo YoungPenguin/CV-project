@@ -95,9 +95,9 @@ H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 #%% IMAGE STITCHING
 ######################################################
 im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
-plt.figure()
-plt.imshow(im_stitched, cmap = 'gray')
-plt.show()
+#plt.figure()
+#plt.imshow(im_stitched, cmap = 'gray')
+#plt.show()
 
 #%% elapsed time
 elapsed = time.time() - t

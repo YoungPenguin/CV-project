@@ -55,9 +55,6 @@ bf = cv2.BFMatcher(distance_method, crossCheck=True)
 # Match descriptors
 matches = bf.match(des1,des2)
 
-stop = time.time()
-
-print('Ran in ' + str(stop-start))
 
 # Sort them in the order of their distance.
 matches = sorted(matches, key = lambda x:x.distance)
@@ -73,6 +70,10 @@ dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ])
 H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 
 output = cvfunctions.warpImages(bottomGray, topGray, H)
+
+stop = time.time()
+
+print('Ran in ' + str(stop-start))
 
 # %% All the graphs
 
