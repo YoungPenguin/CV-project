@@ -71,7 +71,7 @@ matches = bf.knnMatch(des1,des2,k=2)
 good_match = []
 for m,n in matches:
     if m.distance < 0.75*n.distance:
-        good_match.append(m)
+        good_match.append(m) # if the ratio of the first to the second closest distance (d1/d2) is smaller than 0.75, the keypoint is saved.
 
 good_match = sorted(good_match, key = lambda x:x.distance)
         
@@ -99,7 +99,7 @@ f, ax = plt.subplots(figsize=(15,5))
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
 ax.imshow(im_stitched, cmap='gray')
-ax.set_title('Matched SIFT keypoints')
+ax.set_title('Stitched image using SIFT')
 plt.show()
 
 #%% OLD
