@@ -63,7 +63,8 @@ kp2, des2 = sift.detectAndCompute(bottomGray,None)
 
 #%% Feature matching
 # Initiate BFMatcher with default params
-bf = cv2.BFMatcher()
+distance_method = cv2.NORM_L2;
+bf = cv2.BFMatcher(distance_method)
 # Find matches with KNN (k-nearest neighbours)
 matches = bf.knnMatch(des1,des2,k=2)
 
@@ -76,24 +77,26 @@ for m,n in matches:
 good_match = sorted(good_match, key = lambda x:x.distance)
         
 im_matched = cv2.drawMatches(topGray, kp1, bottomGray, kp2, good_match[:100],None,flags = cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-#cv2.imshow('SIFT matches', im_matched)
+#cv2.imshow('SIFT matches using KNN with Euclidian distance', im_matched)
 #%% Image sticting using Homography matrix 
 #cv2.destroyAllWindows() 
 src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match]).reshape(-1,1,2)
 dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_match]).reshape(-1,1,2)
 H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 
-h,w = topGray.shape
-pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-dst = cv2.perspectiveTransform(pts,H)
-
 im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
-#plt.imshow(im_stitched, cmap='gray')
-#plt.show()
 
 stop = time.time()
 
 print('Ran in ' + str(stop-start))
+
+#%% images for exam presentation
+f, ax = plt.subplots(figsize=(15,5))
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+ax.imshow(im_matched)
+ax.set_title('SIFT matches using KNN with Euclidian distance')
+plt.show()
 
 f, ax = plt.subplots(figsize=(15,5))
 ax.axes.get_xaxis().set_visible(False)

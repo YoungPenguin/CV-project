@@ -45,17 +45,12 @@ kp2, des2 = orb.detectAndCompute(bottomGray, None)
 result_im1 = cv2.drawKeypoints(topGray, kp1, None, (255,0,0), flags=0)
 result_im2 = cv2.drawKeypoints(bottomGray, kp2, None,(255,0,0), flags=0)
 
-
-
-# Uing Brute Force matcher with Hamming distance
+# Using Brute Force matcher with Hamming distance
 # create BFMatcher object
 distance_method = cv2.NORM_HAMMING
 bf = cv2.BFMatcher(distance_method)
 
 # Match descriptors
-matches = bf.match(des1,des2)
-
-
 matches_knn = bf.knnMatch(des1,des2,k=2)
 
 # Apply ratio test (Lowes ratio)
@@ -65,24 +60,37 @@ for m,n in matches_knn:
         good_matches.append(m)
 
 # Sort them in the order of their distance.
-matches = sorted(matches, key = lambda x:x.distance)
+good_matches = sorted(good_matches, key = lambda x:x.distance)
 # Draw first 10 matches.
 
-#best_x_matches = len(matches)
+best_x_matches = len(good_matches)
 best_x_matches = 100
-img3 = cv2.drawMatches(topGray, kp1, bottomGray, kp2, matches[:best_x_matches],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-
+im_matched = cv2.drawMatches(topGray, kp1, bottomGray, kp2, good_matches[:best_x_matches],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 # %% Homography estimation and image stitching
-src_pts = np.float32([ kp1[m.queryIdx].pt for m in matches ])
-dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ])
+src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_matches])#.reshape(-1,1,2)
+dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_matches])#.reshape(-1,1,2)
 H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
 
-output = cvfunctions.warpImages(bottomGray, topGray, H)
+im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
 
 stop = time.time()
 
 print('Ran in ' + str(stop-start))
 
+#%% images for exam presentation
+f, ax = plt.subplots(figsize=(15,5))
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+ax.imshow(im_matched)
+ax.set_title('ORB matches using KNN with Hamming distance')
+plt.show()
+
+f, ax = plt.subplots(figsize=(15,5))
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+ax.imshow(im_stitched, cmap='gray')
+ax.set_title('Stitched image using ORB')
+plt.show()
 # %% All the graphs
 
 
@@ -119,11 +127,11 @@ plt.show()
 
 fig, axs = plt.subplots(1, 3, figsize=(15,5))
 axs = axs.flatten()
-for img, ax in zip([bottomGray,output,topGray], axs):
+for img, ax in zip([bottomGray,im_stitched,topGray], axs):
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
     ax.imshow(img, cmap='gray')
-fig.suptitle('Stitched image based on ORB matches')
+fig.suptitle('Stitched image using ORB')
 axs[0].set_title('Bottom')
 axs[1].set_title('Stitched image')
 axs[2].set_title('Top')
@@ -131,11 +139,11 @@ plt.show()
 
 fig, axs = plt.subplots(1, 2, figsize=(15,6))
 axs = axs.flatten()
-for img, ax in zip([output,full], axs):
+for img, ax in zip([im_stitched,full], axs):
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
     ax.imshow(img, cmap='gray')
-fig.suptitle('Stitched image based on ORB matches')
+fig.suptitle('Stitched image using ORB')
 axs[0].set_title('Stitched image')
 axs[1].set_title('Original')
 plt.show()

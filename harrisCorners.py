@@ -77,7 +77,7 @@ for m,n in matches:
 good_match = sorted(good_match, key = lambda x:x.distance)
 
 # show matches
-#im_matched = cv2.drawMatches(topGray, kps1, bottomGray, kps2, good_match[:100],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+im_matched = cv2.drawMatches(topGray, kps1, bottomGray, kps2, good_match[:100],None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 #plt.figure(figsize=(30,20))
 #cv2.imshow('Harris Corners matches', im_matched)
 #plt.savefig('HarrisCorners_matches.png') 
@@ -98,6 +98,22 @@ im_stitched = cvfunctions.warpImages(bottomGray, topGray, H)
 #plt.figure()
 #plt.imshow(im_stitched, cmap = 'gray')
 #plt.show()
+
+
+#%% images for exam presentation
+f, ax = plt.subplots(figsize=(15,5))
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+ax.imshow(im_matched)
+ax.set_title('Harris corner matches using KNN with Euclidian distance')
+plt.show()
+
+f, ax = plt.subplots(figsize=(15,5))
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+ax.imshow(im_stitched, cmap='gray')
+ax.set_title('Stitched image using Harris corners')
+plt.show()
 
 #%% elapsed time
 elapsed = time.time() - t
