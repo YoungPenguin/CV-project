@@ -64,7 +64,7 @@ cbot, rbot = cvfunctions.cornerDetector(bottomGray/255.0, s, eps, k, tau)
 # brief descriptor
 (kps1, f1, kps2, f2) = cvfunctions.brief_descriptor(topGray, bottomGray, ctop, cbot)
 
-bf = cv2.BFMatcher(cv2.NORM_L2)
+bf = cv2.BFMatcher(cv2.NORM_HAMMING) #cv2.BFMatcher(cv2.NORM_L2)
 matches = bf.knnMatch(f1,f2,k=2)
 
 # Apply ratio test
@@ -105,7 +105,7 @@ f, ax = plt.subplots(figsize=(15,5))
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
 ax.imshow(im_matched)
-ax.set_title('Harris corner matches using KNN with Euclidian distance')
+ax.set_title('Harris corner matches using KNN with Hamming distance')
 plt.show()
 
 f, ax = plt.subplots(figsize=(15,5))
